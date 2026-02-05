@@ -1,32 +1,25 @@
-# Use official nginx image
-FROM nginx:alpine
+# Use official nginx alpine image
+FROM nginx:1.24-alpine
 
-# Install curl for health checks (optional but useful)
-RUN apk add --no-cache curl
+# Install envsubst for template processing
+RUN apk add --no-cache gettext bash
 
-# Remove default nginx config
-RUN rm /etc/nginx/conf.d/default.conf
+# Remove default nginx configs
+RUN rm -rf /etc/nginx/conf.d/*
 
-# Copy custom nginx configuration
-COPY nginx.conf /etc/nginx/nginx.conf
+# Copy nginx template configuration
+COPY nginx.conf.template /etc/nginx/templates/nginx.conf.template
 
-# Create SSL directory (even if using Let's Encrypt later)
-RUN mkdir -p /etc/nginx/ssl
+# Set proper permissions
+RUN chown -R nginx:nginx /var/cache/nginx && \
+    chmod -R 755 /var/cache/nginx
 
-# Create a self-signed certificate for initial setup
-# Note: For production, replace with Let's Encrypt certificates
-RUN apk add --no-cache openssl && \
-    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-    -keyout /etc/nginx/ssl/private.key \
-    -out /etc/nginx/ssl/certificate.crt \
-    -subj "/C=US/ST=State/L=City/O=Organization/CN=kraptotechnologies.com"
+# Health check script (simple version)
+RUN echo '#!/bin/sh' > /usr/local/bin/health-check.sh && \
+    echo 'wget --quiet --tries=1 --spider http://localhost:${PORT:-80}/health || exit 1' >> /usr/local/bin/health-check.sh && \
+    chmod +x /usr/local/bin/health-check.sh
 
-# Copy health check script
-COPY health-check.sh /usr/local/bin/health-check.sh
-RUN chmod +x /usr/local/bin/health-check.sh
+# Expose port
+EXPOSE 80
 
-# Expose ports
-EXPOSE 80 443
-
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Use default nginx entrypoint (already handles templates)

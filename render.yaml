@@ -2,10 +2,21 @@ services:
   - type: web
     name: krapto-load-balancer
     env: docker
-    dockerfilePath: ./Dockerfile.render
-    plan: free  # or starter/pro for production
+    dockerfilePath: ./Dockerfile
+    plan: free  # Use "starter" or "pro" for production
     envVars:
       - key: PORT
         value: 80
     healthCheckPath: /health
+    healthCheckTimeout: 10
     autoDeploy: true
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-XSS-Protection
+        value: 1; mode=block
