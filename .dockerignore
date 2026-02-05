@@ -1,9 +1,0 @@
-.git
-.gitignore
-README.md
-docker-compose.yml
-Dockerfile.render
-nginx-simple.conf
-start-nginx.sh
-*.log
-*.tmp
